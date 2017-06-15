@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Login/Register</title>
+		<script type="text/javascript" src="{{url_for('static', filename='js/script.js')}}"></script>
+		<link type="text/css" rel="stylesheet" src="{{url_for('static', filename='css/style.css')}}" />
+	</head>
+	<body>
+		<div id="wrapper">
+			<div id="login">
+				<h1>Login</h1>
+				<form action="/login" method="post">
+					Email:<input type="text" name="email" />
+					Password:<input type="password" name="password" />
+					<input type="submit" value="Login" name="login" />
+				</form>
+				<hr>
+			</div>
+			<div id="registration">
+				{% with messages = get_flashed_messages() %}
+					{% if messages %}
+						{% for message in messages %}
+							<h4>{{ message }}</h4>
+						{% endfor %}
+					{% endif %}
+				{% endwith %}
+				<h1>Register</h1>
+				<form action='/register' method='post'>
+					First Name:<input type="text" name="f_name" />
+					Last Name:<input type="text" name="l_name" />
+					Email:<input type="text" name="email"  />
+					Password:<input type="password" name="password" />
+					Confirm Password:<input type="password" name="confirm_pw" />
+					<input type="submit" value="Register" name="submit" />
+				</form>
+
+			</div>
+		</div>
+
+	</body>
+
+
+</html>
