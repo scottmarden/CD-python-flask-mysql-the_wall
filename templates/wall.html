@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>The Wall</title>
+		<script type="text/javascript" src="{{ url_for('static', filename='js/script.js') }}"></script>
+		<link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+	</head>
+	<body>
+		<div id="wrapper">
+			<div id="header">
+				<h1>Coding Dojo Wall</h1>
+				<h3>Welcome user!</h3>
+				<form action="/logout" method="post">
+					<input type="submit" value="Logout" name="logout" />
+				</form>
+				<hr />
+			</div>
+			<div id="enter_message">
+				<h2>Post a Message</h2>
+				<form action="new_message" method="post">
+					<textarea name="message" rows="4" cols="100"></textarea>
+					<input type="submit" name="submit" value="Post Message!" />
+				</form>
+			</div>
+			<div id="wall">
+				{% if messages > 0 %}
+					{% for message in messages %}
+						<div class="message">
+							<h3>{{ message['user_name'] }}</h3>
+							<h3>{{ message['submit_date']}}</h3>
+							<p>{{ message['message'] }}</p>
+						</div>
+						<div class="comment">
+							<h4>Comments: </h4>
+							{% if comments > 0 %}
+								{% for comment in comments %}
+									{% if comment['message_id'] == message['id'] %}
+										<h5>{{ comment['user_name'] }}</h5>
+										<h5>{{ comment['submit_date'] }}</h5>
+										<p> {{ comment['comment'] }}</p>
+									{% endif %}
+								{% endfor %}
+							{% endif %}
+							<p>Comment:</p>
+							<form action="/new_comment" method="post">
+								<input type="hidden" name="message_id" value={{ message['id'] }} />
+								<textarea name="comment" rows="3" cols="50"></textarea>
+								<input type="submit" name="submit" value="Comment!" />
+							</form>
+						</div>
+					{% endfor %}
+				{% else %}
+					<p>Be the first to write a message!</p>
+				{% endif %}
+
+
+			</div>
+			<div id="messages">
+
+
+			</div>
+
+		</div>
+	</body>
+<html>

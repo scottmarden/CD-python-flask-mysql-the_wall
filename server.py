@@ -5,33 +5,41 @@ import md5
 
 app = Flask(__name__)
 mysql = MySQLConnector(app, 'wall_db')
-app.secret_key = "KSJDgn;jsnd;gJNSD:gjnKSJDNGISDni1u23kajsng"
+app.secret_key = "KSJDgn;jsnd;gJN:gjnKSJDNGISDni1u23kajsng"
 
 @app.route('/')
 def index():
-	if 'user' not in session:
+	#check to see if user is logged in or not.
+	if  'user_id' not in session or session['user_id'] < 1:
 		session['user'] = ''
-	return render_template('index.html')
+		session['user_id'] = 0
+		return render_template('index.html')
+	elif session['user_id'] > 0:
+		return redirect('/wall')
 
 @app.route('/login', methods=['POST'])
 def login():
+	#Prep email and pw for login verification
 	email_check = request.form['email']
-	print email_check
 	pw_check = md5.new(request.form['password']).hexdigest()
-	print pw_check
 
-	query = "SELECT email, password FROM users WHERE email = :email"
+	query = "SELECT email, password, id FROM users WHERE email = :email"
 	data = {
 		'email': request.form['email']
 	}
 	verify = mysql.query_db(query, data)
-	print verify
-	if verify[0]['password'] == pw_check:
+	if len(verify) == 0:
+		print "No email!"
+		flash ("Invalid email or password. Please try again.")
+		return redirect('/')
+	elif verify[0]['password'] == pw_check:
 		print 'Good password!'
 		session['user'] = request.form['email']
-		return redirect('/success')
+		session['user_id'] = verify[0]['id']
+		return redirect('/wall')
 	else:
 		flash('Invalid email or password. Please try again.')
+		return redirect('/')
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -89,24 +97,48 @@ def register():
 			'email': email,
 			'password': hash_pw
 		}
-		mysql.query_db(query, data)
+		user_id = mysql.query_db(query, data)
 		session['user'] = email
-		return redirect('/success')
+		session['user_id'] = user_id
+		return redirect('/wall')
 
 	else:
 		return redirect('/')
 
+@app.route('/wall')
+def wall():
+	if session['user_id'] < 1:
+		return redirect('/')
 
-@app.route('/success')
-def success():
-	query = "SELECT first_name FROM users WHERE email =  :email"
-	data = {
-		'email': session['user']
+	msg_query = "SELECT messages.id, messages.message, messages.user_id, concat(users.first_name, ' ', users.last_name) as user_name, concat(MONTHNAME(messages.created_at), ' ', DAY(messages.created_at), ' ', YEAR(messages.created_at)) as submit_date FROM messages JOIN users ON messages.user_id = users.id ORDER BY messages.created_at DESC"
+
+	com_query = "SELECT comments.id, comments.comment, comments.message_id, concat(users.first_name, ' ', users.last_name) as user_name, concat(MONTHNAME(messages.created_at), ' ', DAY(messages.created_at), ' ', YEAR(messages.created_at)) as submit_date FROM comments JOIN users ON comments.user_id = users.id JOIN messages ON comments.message_id = messages.id ORDER BY comments.created_at ASC"
+	wall_msgs = mysql.query_db(msg_query)
+	wall_coms = mysql.query_db(com_query)
+	return render_template('wall.html', messages=wall_msgs, comments=wall_coms)
+
+
+@app.route('/new_message', methods=['POST'])
+def new_message():
+	query = "INSERT INTO messages(message, user_id, created_at, updated_at) VALUES(:message, :user_id, NOW(), NOW())"
+	data ={
+		'message': request.form['message'],
+		'user_id': session['user_id']
 	}
-	get_user = mysql.query_db(query, data)
-	name = get_user[0]['first_name']
-	print get_user
-	return render_template('success.html', name=name)
+	message_id = mysql.query_db(query, data)
+	return redirect('/wall')
+
+@app.route('/new_comment', methods=['POST'])
+def new_comment():
+	query = "INSERT INTO comments(comment, user_id, message_id, created_at, updated_at) VALUES(:comment, :user_id, :message_id, NOW(), NOW())"
+	data ={
+		'comment': request.form['comment'],
+		'user_id': session['user_id'],
+		'message_id': request.form['message_id']
+	}
+	print data
+	comment_id = mysql.query_db(query, data)
+	return redirect('/wall')
 
 @app.route('/logout', methods=['POST'])
 def logout():

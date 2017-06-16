@@ -1,0 +1,3 @@
+{% if comments > 0 %}
+	<p>There are comments!</p>
+{% endif %}
