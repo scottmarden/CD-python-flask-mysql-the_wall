@@ -98,7 +98,7 @@ def register():
 			'password': hash_pw
 		}
 		user_id = mysql.query_db(query, data)
-		session['user'] = email
+		session['user'] = request.form['f_name']
 		session['user_id'] = user_id
 		return redirect('/wall')
 
